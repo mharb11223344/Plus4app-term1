@@ -33,7 +33,7 @@ type Student = {
 };
 
 type ProgressEntry = { score: number; total: number };
-type Progress = Record<string, ProgressEntry>;
+type Progress = Record<string, ProgressEntry>; type QuizCheckpoint = { quizId: string; unitId: number; lessonIndex: number; mode: "lesson" | "bank"; questionIndex: number; score: number };
 
 const units: Unit[] = [
   {
@@ -157,7 +157,7 @@ export default function Home() {
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(0);
   const [quizMode, setQuizMode] = useState<"lesson" | "bank">("lesson");
   const [selectedSupplementaryId, setSelectedSupplementaryId] = useState("coral");
-  const [progress, setProgress] = useState<Progress>({});
+  const [progress, setProgress] = useState<Progress>({}); const [checkpoint, setCheckpoint] = useState<QuizCheckpoint | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -183,7 +183,7 @@ export default function Home() {
     return () => window.clearTimeout(hydrationTimer);
   }, []);
 
-  const selectedUnit = useMemo(
+  useEffect(() => { try { const savedCheckpoint = window.localStorage.getItem("connect-plus-quiz-checkpoint"); if (savedCheckpoint) setCheckpoint(JSON.parse(savedCheckpoint) as QuizCheckpoint); } catch { window.localStorage.removeItem("connect-plus-quiz-checkpoint"); } }, []); const selectedUnit = useMemo(
     () => units.find((unit) => unit.id === selectedUnitId) ?? units[0],
     [selectedUnitId],
   );
@@ -238,13 +238,13 @@ export default function Home() {
 
   function startLessonQuiz() {
     if (selectedLesson?.project) return;
-    setQuizMode("lesson");
+    setQuizMode("lesson"); const nextCheckpoint: QuizCheckpoint = { quizId: selectedLessonKey, unitId: selectedUnit.id, lessonIndex: selectedLessonIndex, mode: "lesson", questionIndex: 0, score: 0 }; setCheckpoint(nextCheckpoint); window.localStorage.setItem("connect-plus-quiz-checkpoint", JSON.stringify(nextCheckpoint));
     setView("quiz");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function startUnitBank() {
-    setQuizMode("bank");
+    setQuizMode("bank"); const nextCheckpoint: QuizCheckpoint = { quizId: `u${selectedUnit.id}-bank`, unitId: selectedUnit.id, lessonIndex: selectedLessonIndex, mode: "bank", questionIndex: 0, score: 0 }; setCheckpoint(nextCheckpoint); window.localStorage.setItem("connect-plus-quiz-checkpoint", JSON.stringify(nextCheckpoint));
     setView("quiz");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -259,12 +259,12 @@ export default function Home() {
     setProgress((current) => {
       const previous = current[quizId];
       const next = { ...current, [quizId]: { score: Math.max(previous?.score ?? 0, score), total } };
-      window.localStorage.setItem("connect-plus-progress", JSON.stringify(next));
+      window.localStorage.setItem("connect-plus-progress", JSON.stringify(next)); window.localStorage.removeItem("connect-plus-quiz-checkpoint"); setCheckpoint(null);
       return next;
     });
   }
 
-  function goHome() {
+  function saveQuizProgress(questionIndex: number, score: number) { if (!checkpoint) return; const next = { ...checkpoint, questionIndex, score }; setCheckpoint(next); window.localStorage.setItem("connect-plus-quiz-checkpoint", JSON.stringify(next)); } function resumeLastQuestion() { if (!checkpoint) return; setSelectedUnitId(checkpoint.unitId); setSelectedLessonIndex(checkpoint.lessonIndex); setQuizMode(checkpoint.mode); setView("quiz"); window.scrollTo({ top: 0, behavior: "smooth" }); } function goHome() {
     setView("home");
     setMenuOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -368,7 +368,7 @@ export default function Home() {
               <span className="eyebrow-chip">Your learning journey</span>
               <h1>Welcome back, <em>{student.name.split(" ")[0]}!</em></h1>
               <p>Every word you learn is another sparkle in your story. Ready for today’s adventure?</p>
-              <button className="primary-button compact" onClick={() => openUnit(nextUnitId)}>Continue learning <span>→</span></button>
+              <button className="primary-button compact" onClick={() => openUnit(nextUnitId)}>Continue learning <span>→</span></button>{checkpoint && <button className="primary-button compact" onClick={resumeLastQuestion}>Continue Last Question <span>{checkpoint.questionIndex + 1} →</span></button>}
             </div>
             <div className="progress-glass">
               <span className="progress-star">★</span>
@@ -508,7 +508,7 @@ export default function Home() {
           questions={activeQuestions}
           accent={selectedUnit.accent}
           onExit={() => setView(quizMode === "bank" ? "unit" : "lesson")}
-          onComplete={saveResult}
+          initialIndex={checkpoint?.questionIndex ?? 0} initialScore={checkpoint?.score ?? 0} onProgress={saveQuizProgress} onComplete={saveResult}
         />
       )}
 
