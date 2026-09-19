@@ -9,7 +9,7 @@ type QuizPlayerProps = {
   questions: Question[];
   accent: string;
   onExit: () => void;
-  onComplete: (quizId: string, score: number, total: number) => void;
+  onComplete: (quizId: string, score: number, total: number) => void; initialIndex?: number; initialScore?: number; onProgress?: (questionIndex: number, score: number) => void;
 };
 
 function questionLabel(type: Question["type"]) {
@@ -19,9 +19,9 @@ function questionLabel(type: Question["type"]) {
   return "Build the sentence";
 }
 
-export default function QuizPlayer({ quizId, title, questions, accent, onExit, onComplete }: QuizPlayerProps) {
-  const [index, setIndex] = useState(0);
-  const [score, setScore] = useState(0);
+export default function QuizPlayer({ quizId, title, questions, accent, onExit, onComplete, initialIndex = 0, initialScore = 0, onProgress }: QuizPlayerProps) {
+  const [index, setIndex] = useState(initialIndex);
+  const [score, setScore] = useState(initialScore);
   const [choice, setChoice] = useState<string | boolean | null>(null);
   const [matches, setMatches] = useState<Record<string, string>>({});
   const [orderedIndexes, setOrderedIndexes] = useState<number[]>([]);
@@ -64,7 +64,7 @@ export default function QuizPlayer({ quizId, title, questions, accent, onExit, o
       onComplete(quizId, finalScore, questions.length * 10);
       return;
     }
-    setIndex((current) => current + 1);
+    onProgress?.(index + 1, score); setIndex((current) => current + 1);
     setChoice(null);
     setMatches({});
     setOrderedIndexes([]);
@@ -73,7 +73,7 @@ export default function QuizPlayer({ quizId, title, questions, accent, onExit, o
   }
 
   function restart() {
-    setIndex(0);
+    onProgress?.(0, 0); setIndex(0);
     setScore(0);
     setChoice(null);
     setMatches({});
