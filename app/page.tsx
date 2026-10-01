@@ -147,6 +147,11 @@ const units: Unit[] = [
 ];
 
 const emptyStudent: Student = { name: "", className: "", school: "" };
+function portalUnitOpen(id: number) {
+  if (typeof window === 'undefined' || window.top === window) return true;
+  try { const row = JSON.parse(localStorage.getItem('mona-unit-control-Plus4app-term1') || '{}'); return !Array.isArray(row.openUnits) || row.openUnits.includes(id); }
+  catch { return true; }
+}
 
 export default function Home() {
   const [student, setStudent] = useState<Student>(emptyStudent);
@@ -224,6 +229,7 @@ export default function Home() {
   }
 
   function openUnit(id: number) {
+    if (!portalUnitOpen(id)) { window.alert('This unit is closed by Mrs. Mona Harb.'); return; }
     setSelectedUnitId(id);
     setView("unit");
     setMenuOpen(false);
@@ -264,7 +270,7 @@ export default function Home() {
     });
   }
 
-  function saveQuizProgress(questionIndex: number, score: number) { if (!checkpoint) return; const next = { ...checkpoint, questionIndex, score }; setCheckpoint(next); window.localStorage.setItem("connect-plus-quiz-checkpoint", JSON.stringify(next)); } function resumeLastQuestion() { if (!checkpoint) return; setSelectedUnitId(checkpoint.unitId); setSelectedLessonIndex(checkpoint.lessonIndex); setQuizMode(checkpoint.mode); setView("quiz"); window.scrollTo({ top: 0, behavior: "smooth" }); } function goHome() {
+  function saveQuizProgress(questionIndex: number, score: number) { if (!checkpoint) return; const delta = Math.max(0, questionIndex - checkpoint.questionIndex); if (delta) window.localStorage.setItem('connect-plus-answer-count', String(Number(window.localStorage.getItem('connect-plus-answer-count') || 0) + delta)); const next = { ...checkpoint, questionIndex, score }; setCheckpoint(next); window.localStorage.setItem("connect-plus-quiz-checkpoint", JSON.stringify(next)); } function resumeLastQuestion() { if (!checkpoint) return; if (!portalUnitOpen(checkpoint.unitId)) { window.alert('This unit is closed by Mrs. Mona Harb.'); return; } setSelectedUnitId(checkpoint.unitId); setSelectedLessonIndex(checkpoint.lessonIndex); setQuizMode(checkpoint.mode); setView("quiz"); window.scrollTo({ top: 0, behavior: "smooth" }); } function goHome() {
     setView("home");
     setMenuOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -396,7 +402,7 @@ export default function Home() {
                   } as React.CSSProperties}
                   onClick={() => openUnit(unit.id)}
                 >
-                  <span className="unit-number">Unit {unit.id}</span>
+                  <span className="unit-number">Unit {unit.id}{portalUnitOpen(unit.id) ? '' : ' · Closed'}</span>
                   <span className="unit-icon" aria-hidden="true">{unit.icon}</span>
                   <span className="unit-card-copy">
                     <small>{unit.theme}</small>
