@@ -277,74 +277,7 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  if (!started) {
-    return (
-      <main className="welcome-shell">
-        <div className="welcome-image" aria-hidden="true" />
-        <div className="welcome-vignette" aria-hidden="true" />
-        <div className="floating-sparkles" aria-hidden="true">
-          <span>✦</span><span>✧</span><span>✦</span><span>✧</span>
-        </div>
-        <section className="welcome-content" aria-label="Student welcome">
-          <div className="brand-pill"><span>CP</span> Connect Plus 4</div>
-          <div className="welcome-main">
-            <div className="welcome-copy">
-              <p className="kicker">A magical English adventure</p>
-              <h1>Learn. Play.<br /><em>Shine.</em></h1>
-              <p className="welcome-lead">
-                Believe in your voice, enjoy every challenge and let your English sparkle brighter every day.
-              </p>
-            </div>
-
-            <form className="student-card" onSubmit={beginAdventure}>
-              <div className="card-heading">
-                <div className="avatar-orbit" aria-hidden="true">★</div>
-                <div>
-                  <p>Welcome, superstar!</p>
-                  <h2>Tell us about you</h2>
-                </div>
-              </div>
-              <label>
-                Your name
-                <input
-                  required
-                  value={draftStudent.name}
-                  onChange={(event) => setDraftStudent({ ...draftStudent, name: event.target.value })}
-                  placeholder="e.g. Farida Ahmed"
-                  autoComplete="name"
-                />
-              </label>
-              <div className="form-row">
-                <label>
-                  Class
-                  <input
-                    required
-                    value={draftStudent.className}
-                    onChange={(event) => setDraftStudent({ ...draftStudent, className: event.target.value })}
-                    placeholder="e.g. 4A"
-                  />
-                </label>
-                <label>
-                  School
-                  <input
-                    value={draftStudent.school}
-                    onChange={(event) => setDraftStudent({ ...draftStudent, school: event.target.value })}
-                    placeholder="Optional"
-                  />
-                </label>
-              </div>
-              <button className="primary-button" type="submit">
-                Start my adventure <span aria-hidden="true">→</span>
-              </button>
-              <p className="privacy-note">Your details stay safely on this device.</p>
-            </form>
-          </div>
-
-          <p className="teacher-credit">Created with care by <strong>Mrs. Mona Harb</strong></p>
-        </section>
-      </main>
-    );
-  }
+  if (!started) return <main><p role="status">Loading your learning account from the portal…</p></main>;
 
   return (
     <div className="app-shell">
@@ -357,7 +290,7 @@ export default function Home() {
           <button className={view === "home" ? "active" : ""} onClick={goHome}>Home</button>
           <button onClick={() => openUnit(selectedUnitId)}>My Learning</button>
           <button onClick={() => { setView("about"); setMenuOpen(false); }}>Who Am I?</button>
-          <button onClick={() => { setDraftStudent(student); setStarted(false); setMenuOpen(false); }}>Edit Profile</button>
+
         </nav>
         <div className="student-chip">
           <span className="student-avatar">{student.name.charAt(0).toUpperCase()}</span>
