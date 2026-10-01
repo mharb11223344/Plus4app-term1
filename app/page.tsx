@@ -194,7 +194,8 @@ export default function Home() {
   );
   const selectedLesson = selectedUnit.lessons[selectedLessonIndex];
   const selectedLessonKey = getLessonKey(selectedUnit.id, selectedLessonIndex);
-  const totalXp = Object.values(progress).reduce((sum, entry) => sum + entry.score, 0);
+  const totalXp = Object.values(progress).reduce((sum, entry) => sum + entry.score, 0)
+    + (checkpoint ? Math.max(0, checkpoint.score - (progress[checkpoint.quizId]?.score ?? 0)) : 0);
   const assessedXp = Object.entries(progress).reduce(
     (sum, [key, entry]) => /^u[1-6]l[1-5]$/.test(key) ? sum + entry.score : sum,
     0,
