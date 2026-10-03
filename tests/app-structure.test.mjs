@@ -17,21 +17,24 @@ async function importTypeScript(source) {
 }
 
 test("contains the exact assessed lesson and project structure", async () => {
-  const curriculum = await read("app/curriculum.ts");
-  assert.equal((curriculum.match(/^  u[1-6]l[1-5]:/gm) ?? []).length, 30);
-  assert.equal((curriculum.match(/^  u[1-6]l6:/gm) ?? []).length, 6);
+  const curriculum = await importTypeScript(await read("app/curriculum.ts"));
+  assert.equal(Object.keys(curriculum.lessonContent).length, 25);
+  assert.equal(Object.keys(curriculum.projectContent).length, 5);
+  assert.equal(curriculum.lessonKeys.length, 5);
+  assert.ok(curriculum.lessonKeys.every(unit => unit.length === 6));
 });
 
 test("builds 30 lesson questions and 50 unit-bank questions", async () => {
   const curriculumModule = await importTypeScript(await read("app/curriculum.ts"));
   globalThis.__connectPlusLessonContent = curriculumModule.lessonContent;
+  globalThis.__connectPlusGetLessonKey = curriculumModule.getLessonKey;
   const questionsSource = (await read("app/questions.ts")).replace(
-    'import { lessonContent } from "./curriculum";',
-    "const lessonContent = globalThis.__connectPlusLessonContent;",
+    'import { lessonContent, getLessonKey } from "./curriculum";',
+    "const lessonContent = globalThis.__connectPlusLessonContent; const getLessonKey = globalThis.__connectPlusGetLessonKey;",
   );
   const questionsModule = await importTypeScript(questionsSource);
 
-  assert.equal(Object.keys(curriculumModule.lessonContent).length, 30);
+  assert.equal(Object.keys(curriculumModule.lessonContent).length, 25);
   for (const [key, lesson] of Object.entries(curriculumModule.lessonContent)) {
     assert.equal(lesson.definitions.length, 10, `${key} vocabulary count`);
     assert.equal(lesson.checks.length, 6, `${key} true/false count`);
@@ -43,10 +46,13 @@ test("builds 30 lesson questions and 50 unit-bank questions", async () => {
     );
     assert.deepEqual(typeTotals, { mcq: 10, "true-false": 6, matching: 7, ordering: 7 }, `${key} question-type totals`);
   }
-  for (let unit = 1; unit <= 6; unit += 1) {
-    assert.equal(questionsModule.generateUnitBank(unit).length, 50, `Unit ${unit} bank total`);
+  for (let unit = 1; unit <= 5; unit += 1) {
+    const bank = questionsModule.generateUnitBank(unit);
+    assert.equal(bank.length, 50, `Unit ${unit} bank total`);
+    assert.ok(bank.every(question => question.prompt && question.type), `Unit ${unit} has no empty questions`);
   }
   delete globalThis.__connectPlusLessonContent;
+  delete globalThis.__connectPlusGetLessonKey;
 });
 
 test("keeps all visible app content in English", async () => {
