@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["app/**/*.ts", "app/**/*.tsx", "static-entry.tsx"],
+  "exclude": ["node_modules"],
+  "compilerOptions": { "incremental": false }
+}

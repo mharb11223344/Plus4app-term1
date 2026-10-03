@@ -1,57 +1,35 @@
 # Connect Plus 4 · English Adventure
 
-An interactive English learning app for Egyptian Primary 4 students, created for Mrs. Mona Harb's learners. The experience is fully in English and uses a playful, girl-friendly visual style.
+Updated to the supplied 2026–2027 Term 1 Student’s Book for Mrs. Mona Harb’s Primary 4 students.
 
-## What is included
+## Content
 
-- Six complete Term 1 units and 36 lesson pages.
-- Lessons 1–5 in every unit include vocabulary, language notes, an original reading summary, key ideas and smart notes.
-- Lesson 6 in every unit is a view-only project page with no exercises, score or stars.
-- Exactly 30 interactive questions for each assessed lesson.
-- Exactly 50 questions in each unit Power Bank.
-- 1,200 questions in total: 900 lesson questions and 300 unit-bank questions.
-- Multiple choice, true/false, matching and sentence-ordering activities.
-- XP, stars, levels, progress saving and best-score saving.
-- Review 1, Review 2, Coral Reefs and Khayameya Summer reading hubs.
-- Browser text-to-speech buttons for vocabulary and reading summaries.
-- Responsive desktop, tablet and mobile layouts.
-- Student details and learning progress are stored only in the browser's local storage.
+- Five units: What Can I Do?, Plants and Animals, My World, Resources in Our World, and Let’s Work.
+- 25 assessed lessons and five view-only projects.
+- 30 questions per assessed lesson and 50 per unit bank: 1,000 challenges.
+- Vocabulary, grammar, adapted readings, page references, summaries and speech buttons.
+- Alice, Learning from the Jungle, The Kind Prince and the Bird, and Journey to a New Earth.
+- Review 1, Coral Reefs, Review 2 and Khayameya Summer.
+- Rain, The Caterpillar, the weaving presentation and the Term 1 research project.
 
-The separate Term 1 project, Future Jobs, is intentionally not included.
+The supplied PDF’s contents page retains the old six-unit list. This app follows the five units in its actual lesson pages.
 
-## Run locally
+## Accounts and cloud progress
 
-Requirements: Node.js 22.13 or newer and pnpm.
+Open through [Mona Learning Hub](https://mharb11223344.github.io/mona-learning-hub/). The portal supplies the signed-in identity and synchronizes the existing progress keys with Supabase. No second student-name form appears.
 
-```bash
-pnpm install
-pnpm dev
+Moved lessons keep their persisted IDs, scores and checkpoints. Replaced stories have new IDs. Removed lesson achievements stay in total XP but do not mark new lessons complete. Changed unit banks have versioned IDs.
+
+`app/curriculum-progress.ts` restores checkpoints by quiz ID and recalculates displayed unit and lesson numbers. Existing teacher controls keep their identities: Resources uses stored control 5 and Work uses stored control 6, displayed as units 4 and 5. The companion portal update labels them correctly.
+
+## Build and verify
+
+```sh
+node --test tests/*.test.mjs
+node node_modules/typescript/bin/tsc --project tsconfig.curriculum.json --noEmit
+node node_modules/vite/bin/vite.js build --config static.vite.config.ts
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Publish generated JavaScript and CSS from `dist-static/assets/` into `assets/`, then update root `index.html`. Keep its portal redirect and cloud bridge. Root `index.html` is the GitHub Pages entry.
 
-## Verify the project
-
-```bash
-pnpm test
-pnpm build
-```
-
-## Main files
-
-- `app/page.tsx` — navigation, student profile and learning dashboard.
-- `app/curriculum.ts` — lesson-by-lesson teaching content.
-- `app/questions.ts` — deterministic 30-question and 50-question generators.
-- `app/LessonView.tsx` — assessed lesson and view-only project layouts.
-- `app/QuizPlayer.tsx` — the four interactive question modes and rewards.
-- `app/supplementary.ts` — reviews and reader summaries.
-- `public/assets/` — original app and unit cover artwork.
-
-## Teacher
-
-Mrs. Mona Harb holds a Bachelor's degree from the Faculty of Al-Alsun, Ain Shams University. She studied Spanish as her first language and English as her second language. She has extensive experience in teaching English and is passionate about helping young learners develop their language skills with confidence and enjoyment.
-
-## Content note
-
-The app follows the topics and learning sequence of Connect Plus 4, Term 1. Explanations, summaries, activities and questions are newly written for this app; no textbook page scans are embedded.
-
+Explanations, adapted readings and questions are written for this app. Textbook scans are not embedded. Poetry extracts come from the supplied book. Keep local synthetic QA fixtures out of the published files.
