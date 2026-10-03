@@ -615,3 +615,12 @@ button { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
 }
+/* Textbook 2026–2027 readings and poetry. */
+.book-reference { display: block; margin: 12px 0; font-weight: 800; opacity: .9; }
+.adapted-reading { margin: 24px 0; padding: 24px; border-radius: 20px; background: var(--soft, #fff4fa); }
+.adapted-reading h3 { margin: 0 0 8px; font-size: 1.35rem; }
+.adapted-reading p { font-size: 1.1rem; line-height: 1.9; }
+.adapted-reading small { display: block; line-height: 1.6; }
+.reader-poetry .reader-sections p { white-space: pre-line; line-height: 2; }
+.curriculum-extra p { color: #4c4864; }
+.curriculum-extra button { color: inherit; background: white; }

@@ -1,4 +1,4 @@
-import { lessonContent } from "./curriculum";
+import { lessonContent, getLessonKey } from "./curriculum";
 
 export type McqQuestion = {
   id: string;
@@ -74,6 +74,10 @@ export function generateLessonQuestions(lessonKey: string): Question[] {
       explanation: `${word} means ${definition}.`,
     };
   });
+  // New grammar lessons include direct language choices as well as vocabulary.
+  lesson.practice?.forEach((item, index) => {
+    multipleChoice[index] = { ...item, id: `${lessonKey}-grammar-${index + 1}`, type: "mcq" };
+  });
 
   const trueFalse: TrueFalseQuestion[] = lesson.checks.slice(0, 6).map(([statement, answer], index) => ({
     id: `${lessonKey}-tf-${index + 1}`,
@@ -116,7 +120,7 @@ export function generateLessonQuestions(lessonKey: string): Question[] {
 export function generateUnitBank(unitId: number): Question[] {
   const selection = [0, 2, 4, 7, 10, 12, 16, 19, 23, 27];
   return Array.from({ length: 5 }, (_, lessonIndex) => {
-    const lessonKey = `u${unitId}l${lessonIndex + 1}`;
+    const lessonKey = getLessonKey(unitId, lessonIndex);
     return selection.map((questionIndex, bankIndex) => {
       const question = generateLessonQuestions(lessonKey)[questionIndex];
       return { ...question, id: `u${unitId}-bank-${lessonIndex + 1}-${bankIndex + 1}` } as Question;

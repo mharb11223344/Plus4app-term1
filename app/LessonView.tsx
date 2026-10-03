@@ -36,6 +36,7 @@ export default function LessonView({ unitNumber, unitTitle, lessonNumber, accent
           <span>{project ? "View-only project" : `Unit ${unitNumber} · Lesson ${lessonNumber}`}</span>
           <h1>{title}</h1>
           <p>{strapline}</p>
+          <small className="book-reference">2026–2027 · Book pages {(content?.bookPages ?? project?.bookPages)?.join('–')}</small>
           {project ? <div className="view-only-pill">No questions · No score · Explore at your own pace</div> : <div className="lesson-reward-pill">30 interactive challenges · Up to 300 XP</div>}
         </div>
       </section>
@@ -51,7 +52,7 @@ export default function LessonView({ unitNumber, unitTitle, lessonNumber, accent
           <div className="lesson-main">
             <section className="content-block vocabulary-block">
               <div className="content-heading"><div><span>Word power</span><h2>Vocabulary</h2></div><p>Tap the speaker to hear each word.</p></div>
-              <div className="vocabulary-grid">{content.definitions.map(([word, definition]) => <article key={word}><button aria-label={`Listen to ${word}`} onClick={() => speak(word)}>♪</button><strong>{word}</strong><p>{definition}</p></article>)}</div>
+              <div className="vocabulary-grid">{[...content.definitions, ...(content.extraVocabulary ?? [])].map(([word, definition]) => <article key={word}><button aria-label={`Listen to ${word}`} onClick={() => speak(word)}>♪</button><strong>{word}</strong><p>{definition}</p></article>)}</div>
             </section>
 
             <section className="content-block language-block">
@@ -62,6 +63,12 @@ export default function LessonView({ unitNumber, unitTitle, lessonNumber, accent
             <section className="content-block reading-block">
               <div className="content-heading"><div><span>Read and understand</span><h2>{content.readingTitle}</h2></div><button className="round-listen" aria-label="Listen to reading summary" onClick={() => speak(content.summary)}>▶</button></div>
               <p className="reading-summary">{content.summary}</p>
+              {content.passage && <div className="adapted-reading">
+                <h3>Read the lesson</h3>
+                <small>An adapted reading to help you understand the textbook.</small>
+                {content.passage.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
+                <button className="listen-button" onClick={() => speak(content.passage!.join(' '))}>▶ Listen to the reading</button>
+              </div>}
               <div className="key-ideas"><h3>Key ideas</h3>{content.keyIdeas.map((idea, index) => <div key={idea}><span>{index + 1}</span><p>{idea}</p></div>)}</div>
             </section>
 
@@ -69,6 +76,10 @@ export default function LessonView({ unitNumber, unitTitle, lessonNumber, accent
               <div><span>Smart notes</span><h2>Remember this</h2></div>
               <div>{content.tips.map((tip) => <p key={tip}>✦ {tip}</p>)}</div>
             </section>
+            {content.extensions?.map(section => <section className="content-block reading-block" key={section.heading}>
+              <h2>{section.heading}</h2><p className="reading-summary">{section.text}</p>
+              <button className="listen-button" onClick={() => speak(section.text)}>▶ Listen</button>
+            </section>)}
 
             <section className="practice-callout">
               <div><span>Ready to sparkle?</span><h2>Play the 30-question lesson challenge</h2><p>Vocabulary, true or false, matching and sentence building are waiting for you.</p></div>

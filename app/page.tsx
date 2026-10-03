@@ -4,9 +4,11 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import LessonView from "./LessonView";
 import QuizPlayer from "./QuizPlayer";
 import ReaderView from "./ReaderView";
-import { getLessonKey, lessonContent, projectContent } from "./curriculum";
+import { getLessonKey, getBankKey, lessonContent, projectContent } from "./curriculum";
 import { generateLessonQuestions, generateUnitBank } from "./questions";
 import { supplementaryContent } from "./supplementary";
+import { activeLessonXp, controlUnitId, curriculumVersion, restoreCheckpoint, unitXp as getUnitXp } from "./curriculum-progress";
+import type { Progress, QuizCheckpoint } from "./curriculum-progress";
 
 type Lesson = {
   title: string;
@@ -32,124 +34,198 @@ type Student = {
   school: string;
 };
 
-type ProgressEntry = { score: number; total: number };
-type Progress = Record<string, ProgressEntry>; type QuizCheckpoint = { quizId: string; unitId: number; lessonIndex: number; mode: "lesson" | "bank"; questionIndex: number; score: number };
-
 const units: Unit[] = [
   {
-    id: 1,
-    title: "What Can I Do?",
-    theme: "I Discover Myself",
-    eyebrow: "Body, senses & confidence",
-    accent: "#f264a6",
-    soft: "#fff0f7",
-    icon: "✦",
-    cover: "/assets/unit-1-cover.webp",
-    lessons: [
-      { title: "My Body", subtitle: "Body systems and healthy habits" },
-      { title: "Our Senses", subtitle: "How we understand the world" },
-      { title: "Language", subtitle: "Present simple and capital letters" },
-      { title: "Parasports", subtitle: "Champions, ability and inclusion" },
-      { title: "Writing Paragraphs", subtitle: "Titles and healthy lifestyles" },
-      { title: "Summer Camp Project", subtitle: "Read, explore and create", project: true },
-    ],
+    "id": 1,
+    "title": "What Can I Do?",
+    "theme": "I Discover Myself",
+    "eyebrow": "Body, senses & stories",
+    "accent": "#f264a6",
+    "soft": "#fff0f7",
+    "icon": "✦",
+    "cover": "/assets/unit-1-cover.webp",
+    "lessons": [
+      {
+        "title": "Our Amazing Bodies",
+        "subtitle": "Body systems and healthy habits"
+      },
+      {
+        "title": "Our Senses",
+        "subtitle": "How we understand the world"
+      },
+      {
+        "title": "Language: Present Simple",
+        "subtitle": "Facts, routines and negative forms"
+      },
+      {
+        "title": "Literature Corner: Alice",
+        "subtitle": "Alice and the white rabbit"
+      },
+      {
+        "title": "Writing Paragraphs",
+        "subtitle": "Titles and healthy lifestyles"
+      },
+      {
+        "title": "Summer Camp Project",
+        "subtitle": "Plan a healthy summer camp",
+        "project": true
+      }
+    ]
   },
   {
-    id: 2,
-    title: "Plants and Animals",
-    theme: "I Discover Myself",
-    eyebrow: "Nature, habitats & colour",
-    accent: "#6d58d9",
-    soft: "#f1efff",
-    icon: "❀",
-    cover: "/assets/unit-2-cover.webp",
-    lessons: [
-      { title: "Vertebrates", subtitle: "Five fascinating animal groups" },
-      { title: "Language", subtitle: "Comparatives and superlatives" },
-      { title: "Invertebrates", subtitle: "Animals without backbones" },
-      { title: "CLIL: Art", subtitle: "Primary and secondary colours" },
-      { title: "Linking Ideas", subtitle: "Clear and connected writing" },
-      { title: "Micro-habitat Project", subtitle: "Read, explore and create", project: true },
-    ],
+    "id": 2,
+    "title": "Plants and Animals",
+    "theme": "I Discover Myself",
+    "eyebrow": "Nature, habitats & colour",
+    "accent": "#6d58d9",
+    "soft": "#f1efff",
+    "icon": "❀",
+    "cover": "/assets/unit-2-cover.webp",
+    "lessons": [
+      {
+        "title": "Vertebrates",
+        "subtitle": "Five fascinating animal groups"
+      },
+      {
+        "title": "Language: Comparatives and Superlatives",
+        "subtitle": "Comparatives and superlatives"
+      },
+      {
+        "title": "CLIL: Art",
+        "subtitle": "Primary, secondary, warm and cool colours"
+      },
+      {
+        "title": "Literature Corner: Learning from the Jungle",
+        "subtitle": "Mowgli and different animal abilities"
+      },
+      {
+        "title": "Writing: Linking Words and Phrases",
+        "subtitle": "Connecting ideas about water lilies"
+      },
+      {
+        "title": "Micro-habitat Project",
+        "subtitle": "Explore a micro-habitat",
+        "project": true
+      }
+    ]
   },
   {
-    id: 3,
-    title: "My World",
-    theme: "I Discover Myself",
-    eyebrow: "Community, history & music",
-    accent: "#ef8b4c",
-    soft: "#fff3e9",
-    icon: "♫",
-    cover: "/assets/unit-3-cover.webp",
-    lessons: [
-      { title: "My Community", subtitle: "People, places and citizenship" },
-      { title: "The History of Egypt", subtitle: "A journey through ancient Egypt" },
-      { title: "Governorates of Egypt", subtitle: "Explore Egypt on the map" },
-      { title: "CLIL: Music", subtitle: "Traditional Egyptian sounds" },
-      { title: "Writing", subtitle: "Folk dancing and description" },
-      { title: "Tourist Guide Project", subtitle: "Read, explore and create", project: true },
-    ],
+    "id": 3,
+    "title": "My World",
+    "theme": "I Discover Myself",
+    "eyebrow": "Community, history & music",
+    "accent": "#ef8b4c",
+    "soft": "#fff3e9",
+    "icon": "♫",
+    "cover": "/assets/unit-3-cover.webp",
+    "lessons": [
+      {
+        "title": "My Community",
+        "subtitle": "People, places and citizenship"
+      },
+      {
+        "title": "Language: Past Simple",
+        "subtitle": "Ancient Egypt and regular and irregular verbs"
+      },
+      {
+        "title": "CLIL: Music",
+        "subtitle": "Traditional Egyptian sounds"
+      },
+      {
+        "title": "Literature Corner: The Kind Prince and the Bird",
+        "subtitle": "The Kind Prince and the Bird"
+      },
+      {
+        "title": "Writing: Using Topic Sentences",
+        "subtitle": "Folk dancing and topic sentences"
+      },
+      {
+        "title": "Tourist Guide Project",
+        "subtitle": "Create a tourist guide",
+        "project": true
+      }
+    ]
   },
   {
-    id: 4,
-    title: "City and Country",
-    theme: "Myself and Others",
-    eyebrow: "Places, crafts & smart cities",
-    accent: "#34a995",
-    soft: "#eafffa",
-    icon: "⌂",
-    cover: "/assets/unit-4-cover.webp",
-    lessons: [
-      { title: "Rural and Urban Places", subtitle: "Life in cities and villages" },
-      { title: "Language", subtitle: "Regular and irregular plurals" },
-      { title: "A Carpet Workshop", subtitle: "Traditional Egyptian crafts" },
-      { title: "CLIL: Math", subtitle: "Numbers in everyday life" },
-      { title: "Writing", subtitle: "Describe your city" },
-      { title: "Smart Growth Project", subtitle: "Read, explore and create", project: true },
-    ],
+    "id": 4,
+    "title": "Resources in Our World",
+    "theme": "Myself and Others",
+    "eyebrow": "Energy, teamwork & our planet",
+    "accent": "#e8aa2e",
+    "soft": "#fff8df",
+    "icon": "☀",
+    "cover": "/assets/unit-5-cover.webp",
+    "lessons": [
+      {
+        "title": "Natural Resources",
+        "subtitle": "Renewable and non-renewable resources"
+      },
+      {
+        "title": "Renewable Energy",
+        "subtitle": "Solar, wind, wave and tidal power"
+      },
+      {
+        "title": "Language: Possessive Adjectives",
+        "subtitle": "His, her, their and a job interview"
+      },
+      {
+        "title": "Teamwork",
+        "subtitle": "Team values and a job application"
+      },
+      {
+        "title": "Literature Corner: Journey to a New Earth",
+        "subtitle": "Journey to a New Earth"
+      },
+      {
+        "title": "Eco-vehicle Project",
+        "subtitle": "Design an eco-friendly vehicle",
+        "project": true
+      }
+    ]
   },
   {
-    id: 5,
-    title: "Resources in Our World",
-    theme: "Myself and Others",
-    eyebrow: "Energy, teamwork & our planet",
-    accent: "#e8aa2e",
-    soft: "#fff8df",
-    icon: "☀",
-    cover: "/assets/unit-5-cover.webp",
-    lessons: [
-      { title: "Natural Resources", subtitle: "Renewable and non-renewable" },
-      { title: "Language", subtitle: "Fossil fuels and climate" },
-      { title: "Renewable Energy", subtitle: "Solar, wind, wave and tidal power" },
-      { title: "Pronouns", subtitle: "Clear and accurate sentences" },
-      { title: "Teamwork", subtitle: "How to be a great team member" },
-      { title: "Eco-vehicle Project", subtitle: "Read, explore and create", project: true },
-    ],
-  },
-  {
-    id: 6,
-    title: "Let’s Work",
-    theme: "Myself and Others",
-    eyebrow: "Transport, technology & careers",
-    accent: "#438ad9",
-    soft: "#eaf5ff",
-    icon: "⚡",
-    cover: "/assets/unit-6-cover.webp",
-    lessons: [
-      { title: "Transportation", subtitle: "Travel by air, rail, road and water" },
-      { title: "Language", subtitle: "Future predictions with will" },
-      { title: "Tech Jobs", subtitle: "Exciting careers of the future" },
-      { title: "Passwords & Passphrases", subtitle: "Be safe and smart online" },
-      { title: "A Fun Job", subtitle: "Ships, captains and the Suez Canal" },
-      { title: "Young Entrepreneurs", subtitle: "Read, explore and create", project: true },
-    ],
-  },
+    "id": 5,
+    "title": "Let’s Work",
+    "theme": "Myself and Others",
+    "eyebrow": "Transport, technology & careers",
+    "accent": "#438ad9",
+    "soft": "#eaf5ff",
+    "icon": "⚡",
+    "cover": "/assets/unit-6-cover.webp",
+    "lessons": [
+      {
+        "title": "Transportation",
+        "subtitle": "Travel by air, rail, road and water"
+      },
+      {
+        "title": "Language: Predictions with Will",
+        "subtitle": "Future predictions with will"
+      },
+      {
+        "title": "Tech Jobs",
+        "subtitle": "Exciting technology careers"
+      },
+      {
+        "title": "CLIL: ICT — Passwords and Passphrases",
+        "subtitle": "Be safe and smart online"
+      },
+      {
+        "title": "Writing: Structuring a Paragraph",
+        "subtitle": "A Fun Job and paragraph structure"
+      },
+      {
+        "title": "Young Entrepreneurs",
+        "subtitle": "Plan a small business",
+        "project": true
+      }
+    ]
+  }
 ];
 
 const emptyStudent: Student = { name: "", className: "", school: "" };
 function portalUnitOpen(id: number) {
   if (typeof window === 'undefined' || window.top === window) return true;
-  try { const row = JSON.parse(localStorage.getItem('mona-unit-control-Plus4app-term1') || '{}'); return !Array.isArray(row.openUnits) || row.openUnits.includes(id); }
+  try { const row = JSON.parse(localStorage.getItem('mona-unit-control-Plus4app-term1') || '{}'); return !Array.isArray(row.openUnits) || row.openUnits.includes(controlUnitId(id)); }
   catch { return true; }
 }
 
@@ -180,15 +256,24 @@ export default function Home() {
       }
       try {
         const savedProgress = window.localStorage.getItem("connect-plus-progress");
-        if (savedProgress) setProgress(JSON.parse(savedProgress) as Progress);
+        const storedProgress = savedProgress ? JSON.parse(savedProgress) as Progress : {};
+        const storedCheckpoint = window.localStorage.getItem("connect-plus-quiz-checkpoint");
+        let parsedCheckpoint: QuizCheckpoint | null = null;
+        try { parsedCheckpoint = storedCheckpoint ? JSON.parse(storedCheckpoint) : null; } catch { /* Keep saved lesson results if only the checkpoint is damaged. */ }
+        const restored = restoreCheckpoint(storedProgress, parsedCheckpoint);
+        setProgress(restored.progress);
+        setCheckpoint(restored.checkpoint);
+        window.localStorage.setItem("connect-plus-progress", JSON.stringify(restored.progress));
+        if (restored.checkpoint) window.localStorage.setItem("connect-plus-quiz-checkpoint", JSON.stringify(restored.checkpoint));
+        else window.localStorage.removeItem("connect-plus-quiz-checkpoint");
       } catch {
-        window.localStorage.removeItem("connect-plus-progress");
+        // Leave the saved record intact so the portal can recover it from the cloud.
       }
     }, 0);
     return () => window.clearTimeout(hydrationTimer);
   }, []);
 
-  useEffect(() => { try { const savedCheckpoint = window.localStorage.getItem("connect-plus-quiz-checkpoint"); if (savedCheckpoint) setCheckpoint(JSON.parse(savedCheckpoint) as QuizCheckpoint); } catch { window.localStorage.removeItem("connect-plus-quiz-checkpoint"); } }, []); const selectedUnit = useMemo(
+  const selectedUnit = useMemo(
     () => units.find((unit) => unit.id === selectedUnitId) ?? units[0],
     [selectedUnitId],
   );
@@ -196,20 +281,14 @@ export default function Home() {
   const selectedLessonKey = getLessonKey(selectedUnit.id, selectedLessonIndex);
   const totalXp = Object.values(progress).reduce((sum, entry) => sum + entry.score, 0)
     + (checkpoint ? Math.max(0, checkpoint.score - (progress[checkpoint.quizId]?.score ?? 0)) : 0);
-  const assessedXp = Object.entries(progress).reduce(
-    (sum, [key, entry]) => /^u[1-6]l[1-5]$/.test(key) ? sum + entry.score : sum,
-    0,
-  );
-  const termProgress = Math.round((assessedXp / 9000) * 100);
-  const getUnitCompletion = (unitId: number) => Math.round(
-    (Array.from({ length: 5 }, (_, index) => progress[`u${unitId}l${index + 1}`]?.score ?? 0)
+  const assessedXp = activeLessonXp(progress);
+  const termProgress = Math.min(100, Math.round((assessedXp / 7500) * 100));
+  const getUnitCompletion = (unitId: number) => Math.min(100, Math.round(
+    (Array.from({ length: 5 }, (_, index) => progress[getLessonKey(unitId, index)]?.score ?? 0)
       .reduce((sum, score) => sum + score, 0) / 1500) * 100,
-  );
-  const nextUnitId = units.find((unit) => getUnitCompletion(unit.id) < 100)?.id ?? 6;
-  const unitXp = Object.entries(progress).reduce(
-    (sum, [key, entry]) => key.startsWith(`u${selectedUnit.id}`) ? sum + entry.score : sum,
-    0,
-  );
+  ));
+  const nextUnitId = units.find((unit) => getUnitCompletion(unit.id) < 100)?.id ?? 5;
+  const unitXp = getUnitXp(progress, selectedUnit.id);
   const activeQuestions = useMemo(
     () => quizMode === "bank" ? generateUnitBank(selectedUnit.id) : generateLessonQuestions(selectedLessonKey),
     [quizMode, selectedLessonKey, selectedUnit.id],
@@ -245,13 +324,13 @@ export default function Home() {
 
   function startLessonQuiz() {
     if (selectedLesson?.project) return;
-    setQuizMode("lesson"); const nextCheckpoint: QuizCheckpoint = { quizId: selectedLessonKey, unitId: selectedUnit.id, lessonIndex: selectedLessonIndex, mode: "lesson", questionIndex: 0, score: 0 }; setCheckpoint(nextCheckpoint); window.localStorage.setItem("connect-plus-quiz-checkpoint", JSON.stringify(nextCheckpoint));
+    setQuizMode("lesson"); const nextCheckpoint: QuizCheckpoint = { quizId: selectedLessonKey, unitId: selectedUnit.id, lessonIndex: selectedLessonIndex, mode: "lesson", questionIndex: 0, score: 0, curriculumVersion }; setCheckpoint(nextCheckpoint); window.localStorage.setItem("connect-plus-quiz-checkpoint", JSON.stringify(nextCheckpoint));
     setView("quiz");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function startUnitBank() {
-    setQuizMode("bank"); const nextCheckpoint: QuizCheckpoint = { quizId: `u${selectedUnit.id}-bank`, unitId: selectedUnit.id, lessonIndex: selectedLessonIndex, mode: "bank", questionIndex: 0, score: 0 }; setCheckpoint(nextCheckpoint); window.localStorage.setItem("connect-plus-quiz-checkpoint", JSON.stringify(nextCheckpoint));
+    setQuizMode("bank"); const nextCheckpoint: QuizCheckpoint = { quizId: getBankKey(selectedUnit.id), unitId: selectedUnit.id, lessonIndex: selectedLessonIndex, mode: "bank", questionIndex: 0, score: 0, curriculumVersion }; setCheckpoint(nextCheckpoint); window.localStorage.setItem("connect-plus-quiz-checkpoint", JSON.stringify(nextCheckpoint));
     setView("quiz");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -305,7 +384,7 @@ export default function Home() {
             <div className="dashboard-hero-image" aria-hidden="true" />
             <div className="dashboard-hero-overlay" />
             <div className="dashboard-hero-copy">
-              <span className="eyebrow-chip">Your learning journey</span>
+              <span className="eyebrow-chip">Term 1 · 2026–2027</span>
               <h1>Welcome back, <em>{student.name.split(" ")[0]}!</em></h1>
               <p>Every word you learn is another sparkle in your story. Ready for today’s adventure?</p>
               <button className="primary-button compact" onClick={() => openUnit(nextUnitId)}>Continue learning <span>→</span></button>{checkpoint && <button className="primary-button compact" onClick={resumeLastQuestion}>Continue Last Question <span>{checkpoint.questionIndex + 1} →</span></button>}
@@ -320,7 +399,7 @@ export default function Home() {
           <section className="dashboard-content">
             <div className="section-heading">
               <div><p className="kicker">Choose your next world</p><h2>Explore the units</h2></div>
-              <div className="term-stats"><span><strong>6</strong> worlds</span><span><strong>1,200</strong> challenges</span></div>
+              <div className="term-stats"><span><strong>5</strong> worlds</span><span><strong>1,000</strong> challenges</span></div>
             </div>
             <div className="unit-grid">
               {units.map((unit) => (
@@ -369,11 +448,20 @@ export default function Home() {
                 <button onClick={() => openReader("khayameya")}>Open story →</button>
               </article>
               <article className="extra-card has-art review-two-card" style={{ backgroundImage: "linear-gradient(90deg, rgba(77,28,55,.9), rgba(77,28,55,.2)), url(/assets/review-2-cover.webp)" }}>
-                <span className="extra-label">Units 4–6 recap</span>
+                <span className="extra-label">Units 4–5 recap</span>
                 <h3>Review 2</h3>
-                <p>Bring together places, resources, technology and work.</p>
+                <p>Bring together resources, technology and work.</p>
                 <button onClick={() => openReader("review2")}>Open review →</button>
               </article>
+              {['rain', 'caterpillar', 'presentation', 'term-project'].map(id => {
+                const item = supplementaryContent[id];
+                return <article className="extra-card curriculum-extra" style={{ background: item.soft, color: item.color }} key={id}>
+                  <span className="extra-label">{item.subtitle}</span>
+                  <h3>{item.title}</h3>
+                  <p>{item.intro}</p>
+                  <button onClick={() => openReader(id)}>Explore →</button>
+                </article>;
+              })}
             </div>
           </section>
         </main>
@@ -443,7 +531,7 @@ export default function Home() {
 
       {view === "quiz" && (
         <QuizPlayer
-          quizId={quizMode === "bank" ? `u${selectedUnit.id}-bank` : selectedLessonKey}
+          quizId={quizMode === "bank" ? getBankKey(selectedUnit.id) : selectedLessonKey}
           title={quizMode === "bank" ? `${selectedUnit.title} · 50-Question Power Bank` : selectedLesson.title}
           questions={activeQuestions}
           accent={selectedUnit.accent}

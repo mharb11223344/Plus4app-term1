@@ -22,6 +22,7 @@ export default function ReaderView({ content, onBack }: ReaderViewProps) {
         <span>{content.subtitle}</span>
         <h1>{content.title}</h1>
         <p>{content.intro}</p>
+        <small className="book-reference">2026–2027 · Book pages {content.bookPages?.length ? `${content.bookPages[0]}–${content.bookPages.at(-1)}` : ''}</small>
         <button className="reader-listen" onClick={() => speak(`${content.title}. ${content.intro}`)}>▶ Listen to introduction</button>
       </section>
       <section className="reader-content">
